@@ -16,6 +16,7 @@ from torchvision import transforms
 
 from models import build_model
 from utils import read_config
+from utils import read_config
 
 import time
 
@@ -85,24 +86,23 @@ def extractor(path_config, path_attribute, path_model, image, return_type=0):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="")
+    parser = argparse.ArgumentParser(description="Inference Args")
     parser.add_argument("--config", default="config/base_extraction.yml", type=str)
+    parser.add_argument("--checkpoint", default=None, required=True, type=str)
+    parser.add_argument("--image", default=None, required=True, type=str)
     args = parser.parse_args()
 
-    path_image = "./data_dir/pa_100k/images/100000.jpg"
+    path_image = args.image
 
     image = imread(path_image)
-
-    # result = extractor(args.config, image, 2)
-    # result = extractor(path_config=args.config, path_attribute='peta_attribute.pkl', path_model="/content/drive/Shared drives/REID/HIEN/Models/OSNet_Person_Attribute_Refactor/checkpoints/0731_232453/model_best_accuracy.pth", image=image, return_type=0)
 
     start_time = time.time()
     result = extractor(
         path_config=args.config,
         path_attribute="pa100k_attribute.pkl",
-        path_model="saved/checkpoints/1114_224647/model_last.pth",
+        path_model=args.checkpoint,
         image=image,
-        return_type=1,
+        return_type=2,
     )
     end_time = time.time()
     print(result)
