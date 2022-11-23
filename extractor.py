@@ -65,6 +65,7 @@ def extractor(path_config, path_attribute, path_model, image, return_type=0):
 
     out = model(image)
     out = torch.squeeze(out)
+    probs = np.round(torch.sigmoid(out).detach().numpy(), 3)
     out = torch.sigmoid(out)
 
     out = out.cpu().detach().numpy()
@@ -73,17 +74,8 @@ def extractor(path_config, path_attribute, path_model, image, return_type=0):
     out[out <= 0.3] = 0
     out[(out <= 0.7) & (out >= 0.3)] = 1
     out = out.astype(int)
-
-    if return_type == 0:
-        out = out.tolist()
-        return out
-    elif return_type == 1:
-        return dict(zip(attribute_name, out.tolist()))
-    elif return_type == 2:
-        return np.array(attribute_name)[out.astype(bool)].tolist()
-
-    return out
-
+    att_with_probs = {attribute_name[i]: probs[i] for i in range(len(out)) if out[i] > 0}
+    return att_with_probs
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inference Args")
@@ -97,7 +89,7 @@ if __name__ == "__main__":
     image = imread(path_image)
 
     start_time = time.time()
-    result = extractor(
+    att_with_probs = extractor(
         path_config=args.config,
         path_attribute="pa100k_attribute.pkl",
         path_model=args.checkpoint,
@@ -105,5 +97,5 @@ if __name__ == "__main__":
         return_type=2,
     )
     end_time = time.time()
-    print(result)
+    print(att_with_probs)
     print(f"Inference time: {(end_time - start_time):.3f}s")
