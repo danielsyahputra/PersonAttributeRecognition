@@ -8,6 +8,7 @@ import pickle
 import argparse
 import numpy as np
 from torchvision import transforms
+from PIL import Image
 
 from models import build_model
 from utils import read_config
@@ -192,6 +193,9 @@ def detect(save_img=False):
 
     print(f'Done. ({time.time() - t0:.3f}s)')
 
+def imread(path):
+    return Image.open(path)
+
 def extractor(path_config, path_attribute, path_model, image, return_type=0):
     r"""
 
@@ -253,10 +257,24 @@ def main(opt):
                 strip_optimizer(opt.weights)
         else:
             detect()
-    print(os.listdir("crop"))
+    
+    people_imgs = os.listdir("crop")
+    for people_img in people_imgs:
+        image = imread(f"crop/{people_img}")
+        att_with_probs = extractor(
+            path_config=opt.config,
+            path_attribute="pa100k_attribute.pkl",
+            path_model=opt.rc,
+            image=image,
+            return_type=2,
+        )
+        print()
+        print(att_with_probs)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
+
+    # Detector args
     parser.add_argument('--weights', nargs='+', type=str, default='yolov7.pt', help='model.pt path(s)')
     parser.add_argument('--source', type=str, default='inference/images', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
@@ -275,5 +293,9 @@ if __name__=='__main__':
     parser.add_argument('--name', default='exp', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
+
+    # Recognizer args
+    parser.add_argument("--config", default="config/base_extraction.yml", type=str)
+    parser.add_argument("--rc", default=None, required=True, type=str, help="Path for recognizer model checkpoint")
     opt = parser.parse_args()
     main(opt)
